@@ -1,15 +1,83 @@
 
+```{r}
 library(tidyverse)
 library(here)
+```
+Para iniciarmos nossa análise, o primeiro passo é importar os dados do csv para um dada frame.
 
 
 ```{r}
 dados <- read_csv(("dadosCEAP.csv"))
+limiteCEAP <- read_csv(("limiteMensal.csv"))
+```
 
-#1
+```{r}
+#1 a)
 
  dados %>%
    filter(valorLíquido > 0) %>%
    group_by(nomeParlamentar) %>% summarise(gastos = sum(valorLíquido)) %>% top_n(15) %>% 
-   ggplot(aes(x = gastos, y = nomeParlamentar)) + geom_bar(stat = "identity")
+   ggplot(aes(x = gastos, y = nomeParlamentar)) + geom_col(position = position_identity())
 ```
+```{r}
+
+#1 b)
+
+dados %>%
+   filter(valorLíquido > 0) %>%
+   group_by(nomeParlamentar) %>% summarise(gastos = sum(valorLíquido)) %>% top_n(-15) %>%
+   ggplot(aes(x = gastos, y = nomeParlamentar)) + geom_col(position = position_identity())
+
+```
+
+```{r}
+#2 a)
+
+ dados %>%
+  filter(tipoDocumento == 2 & valorLíquido > 0) %>%
+  group_by(sgUF) %>% summarise(gastosExterior = sum(valorLíquido)) %>%
+  ggplot(aes(x = sgUF, y = gastosExterior)) + geom_bar(stat = "identity")
+
+```
+
+```{r}
+#3
+
+ dados  %>% 
+  filter(valorLíquido > 0)  %>%
+  group_by(sgUF = "PB")  %>%
+  group_by(sgPartido)  %>% 
+  summarise(gastosPB = sum(valorLíquido)) %>%
+  ggplot(aes(x = sgPartido, y = gastosPB)) + geom_bar(stat = "identity")
+
+
+```
+
+```{r}
+#4
+
+ dados %>%
+ filter(valorLíquido > 0) %>%
+ group_by(nomeParlamentar) %>% 
+ summarise(gastos = sum(valorLíquido)) %>%
+ limiteCEAP %>% 
+
+```
+
+```{r}
+#5
+
+  dados %>% 
+  group_by(tipoDespesa = "PASSAGENS AÉREAS") %>% group_by(sgUF)  %>% summarise(gastosPassagens = sum(valorLíquido)) %>%
+  ggplot(aes(x = sgUF, y = gastosPassagens)) + geom_bar(stat = "identity")
+
+```
+
+```{r}
+
+
+```
+
+
+
+
