@@ -1,83 +1,169 @@
+---
+title: 'Lab01_CDP - Análise de Gastos de Deputados: Nossas Perguntas'
+author: "José Ivan"
+date: "3 de setembro de 2018"
+output: html_document
+---
 
 ```{r}
 library(tidyverse)
-library(here)
 ```
 Para iniciarmos nossa análise, o primeiro passo é importar os dados do csv para um dada frame.
 
-
 ```{r}
+
 dados <- read_csv(("dadosCEAP.csv"))
-limiteCEAP <- read_csv(("limiteMensal.csv"))
+limiteCEAP <- read_csv(("limiteMensalCEAP.csv"))
+limiteCEAP <- limiteCEAP %>%  rename(sgUF = UF)
+dados <- full_join(dados, limiteCEAP, by = "sgUF")
 ```
+
+Para encontramos os deputados que menos e mais gastaram recursos da CEAP, filtramos os valores liquidos maiores que zero (para que as compensações não afetem no resultado final), agrupamos cada deputado pelo seu nome e somamos os seus gastos.
 
 ```{r}
 #1 a)
+  
+ # filtra-se os valores liquidos maiores que zero, em seguida os deputados sao agrupados por nome e seus gastos sao somados. Seleciona-se os 15 que mais gastaram.
 
  dados %>%
    filter(valorLíquido > 0) %>%
    group_by(nomeParlamentar) %>% summarise(gastos = sum(valorLíquido)) %>% top_n(15) %>% 
-   ggplot(aes(x = gastos, y = nomeParlamentar)) + geom_col(position = position_identity())
+   ggplot(aes(x = gastos, y = nomeParlamentar)) +
+  geom_point()
 ```
+
+Utilizamos a função top_n para obtermos os 15 deputados que mais gastaram. Podemos ver, pelo gráfico, que os deputados Edio Lopes, Rocha e Abel Mesquita Jr foram os que mais gastaram, respectivamente. O restante dos 15, podem ser visto no gráfico.
+
 ```{r}
 
 #1 b)
 
+# filtra-se os valores liquidos maiores que zero, em seguida os deputados sao agrupados por nome e seus gastos sao somados. Seleciona-se os 15 que menos gastaram.
+
 dados %>%
    filter(valorLíquido > 0) %>%
    group_by(nomeParlamentar) %>% summarise(gastos = sum(valorLíquido)) %>% top_n(-15) %>%
-   ggplot(aes(x = gastos, y = nomeParlamentar)) + geom_col(position = position_identity())
+   ggplot(aes(x = gastos, y = nomeParlamentar)) +
+  geom_point()
 
 ```
 
+A semelhança do item a, utilizamos a função top_n para obtermos os 15 deputados que menos gastaram. Podemos ver, pelo gráfico, que os deputados Gabriel Chalita, Arthur Bruno e Simplício Arapujo foram os que menos gastaram, respectivamente. O restante dos 15, podem ser visto no gráfico.
+
+
+No item 2, para acharmos os estados nos quais seus deputados gastam mais no exterior, filtramos os dados pelo tipo de documento 2 (documento que indica gasto no exterior) e os valores liquidos maiores que zero (para que as compensações não afetem no resultado final), agrupamos os dados por estados e somamos os gastos dos deputados.
 ```{r}
 #2 a)
+
+ # Para pegarmos os gastos no exterior, filtramos pelo tipo de documento 2. Filtramos os valores liquidos maiores que zero e agrupamos por estado. Em seguida, somamos os gastos correspondentes, que correspondem aos gatos no exterior.
 
  dados %>%
   filter(tipoDocumento == 2 & valorLíquido > 0) %>%
   group_by(sgUF) %>% summarise(gastosExterior = sum(valorLíquido)) %>%
-  ggplot(aes(x = sgUF, y = gastosExterior)) + geom_bar(stat = "identity")
+  ggplot(aes(x = reorder(sgUF, -gastosExterior), y = gastosExterior)) + geom_bar(stat = "identity")
 
 ```
 
+Como podemos enxergar no gráfico, os três estados onde seus deputados mais gastam no exterior é São Paulo, Minas Gerais e Pernambuco. Os três que menos gastam são Maranhão, Paraíba e Pará. O restante do ranking pode ser visto no gráfico.
+
+
+No item 3, devemos calcular o gasto dos parlamentares paraibanos por quantidade e por valor. Para a quantidade, filtramos os valores liquidos iguais a zero, agrupamos os partidos e selecionamos o estado da PB, por fim, somanos a quantidade dos gastos.
+
 ```{r}
-#3
+
+ # Filtramos os gastos maiores que zero, agrupamos pelo estado da Paraíba e pelos partidos. Em seguida, somamos a quantidade de despesa que cada partido gerou.
 
  dados  %>% 
   filter(valorLíquido > 0)  %>%
   group_by(sgUF = "PB")  %>%
   group_by(sgPartido)  %>% 
-  summarise(gastosPB = sum(valorLíquido)) %>%
-  ggplot(aes(x = sgPartido, y = gastosPB)) + geom_bar(stat = "identity")
-
-
-```
-
-```{r}
-#4
-
- dados %>%
- filter(valorLíquido > 0) %>%
- group_by(nomeParlamentar) %>% 
- summarise(gastos = sum(valorLíquido)) %>%
- limiteCEAP %>% 
+  summarise(gastosPB = n()) %>%
+  na.omit() %>%
+  ggplot(aes(x = reorder(sgPartido, -gastosPB), y = gastosPB)) + geom_bar(stat = "identity") + coord_flip()
 
 ```
 
+Como podemos enxergar no gráfico, os três partidos que mais usam o CEAP na PB são PT, PMDB e PSDB, na ordem, provavelmente pelo fato de serem os partidos com o maior número de deputados eleitos e ativos. Os que menos usam são PTdoB, PMN e PRTB, provavelmente por serem os partidos de menor bancada na câmara. O restante dos partidos e suas posições no ranking, podemos vizualizar no gráfico.
+
+Agora, para calcular o valor, fazemos o mesmo procedimento para emcontrar a quantidade, porém, ao invés de somarmos as quantidades, somamos os valores.
 ```{r}
-#5
+
+# Filtramos os gastos maiores que zero, agrupamos pelo estado da Paraíba e pelos partidos. Em seguida, somamos o valor da despesa que cada partido gerou.
 
   dados %>% 
-  group_by(tipoDespesa = "PASSAGENS AÉREAS") %>% group_by(sgUF)  %>% summarise(gastosPassagens = sum(valorLíquido)) %>%
-  ggplot(aes(x = sgUF, y = gastosPassagens)) + geom_bar(stat = "identity")
+  filter(valorLíquido > 0) %>% 
+  group_by(sgUF = "PB") %>% 
+  group_by(sgPartido) %>% 
+  summarise(gastosPB = sum(valorLíquido)) %>%
+  na.omit() %>% 
+  ggplot(aes(x = reorder(sgPartido, - gastosPB), y = gastosPB)) + geom_bar(stat = "identity") + coord_flip()
+```
+
+Como podemos ver, os três pertidos que mais usaram o CEAP, em valor, foram o PMDB, PT e PSDB, provavelmente pelo fato de serem os partidos com o maior número de deputados eleitos e ativos. Os que menos utilizaram foram PTdoB, PMN e PRTB, provavelmente por serem os partidos de menor bancada na câmara. O restante dos partidos e suas posições no ranking, podemos vizualizar no gráfico.
+
+Para encontrar os deputados que mais ultrapassaram os limites de seu estados, agrupamos os mesmos por nome e limite mensal, somamos seus gastos e depois filtramos aqueles que ultrapassaram o limite.
+```{r}
+#4
+# Filtra-se os valores liquidos maiores que zero, agrupa-se os parlamentares por nome e pelo limite de gasto mensal de cada estado , em seguida, soma-se os gastos totais de cada um filtra-se aqueles que ultrapassam o limite, deixando-os de forma ordenada em relacao aos gastos.
+ dados %>%
+ filter(valorLíquido > 0) %>%
+ group_by(nomeParlamentar, limite_mensal) %>%
+ summarise(gastos = sum(valorLíquido)) %>%
+ filter(gastos > limite_mensal) %>%
+ arrange(desc(gastos)) %>%
+ head(10) %>%
+ ggplot(aes(x = reorder(nomeParlamentar, gastos), y = gastos)) + geom_bar(stat = "identity") + coord_flip()
 
 ```
+
+Podemos ver pelo gráfico que os trẽs deputados que mais ultrapassaram o limite de seu estados foram Edio Lopes, Rocha e Abel Mesquita Jr. O restante (top 10) podemos ver no gráfico.
+
+Para acharmos os estados que os parlamentares mais gastam em passagens aéreas, filtramos o tipo da despesa como despesa aérea, agrupamos os estados e somamos os gastos em passagem. Assim teremos os gastos com passagens aéreas por cada estado.
+```{r}
+#5
+  # os dados sao filtrados pelo tipo de passagens aereas, em seguida, os estados sao agrupados e somados os gastos liquidos correspondentes.
+
+  dados %>% 
+  filter(tipoDespesa == "PASSAGENS AÉREAS") %>% group_by(sgUF)  %>% summarise(gastosPassagens = sum(valorLíquido)) %>%
+  na.omit() %>% 
+  ggplot(aes(x = reorder(sgUF, -gastosPassagens), y = gastosPassagens)) + geom_bar(stat = "identity")
+
+```
+
+Como podemos ver no gráfico, os três estados que mais gastam com passagens aéreas são São Paulo, Amazonas e Rio de Janeiro. O restante do ranking podemos ver pelo gráfico.
+
+
+No item 6, os partidos escolhidos foram PT, PMDB e DEM. Primeiro filtramos esses partidos no conjunto de partidos que temos no dataframe, depois agrupamos os tipos de despesa e somamos a quantidade de cada um.
+```{r}
+#6 a)
+
+# primeiro, foi criado um array com três partidos escolhidos, logo depois os mesmos são filtrados no dataframe
+# em seguida, agrupa-se a variável tipoDespesa e soma-se os quantidade de vezes de menção a cada tipo de gasto.
+
+partidos <- c("PT", "PMDB", "DEM")
+
+dados %>% filter(sgPartido %in% partidos) %>% 
+group_by(tipoDespesa) %>% 
+summarise(despesas = n()) %>% 
+ggplot(aes(x = reorder(tipoDespesa, despesas), y = despesas)) + geom_bar(stat = "identity") + coord_flip()
+
+```
+
+Como podemos ver, o tipo de despesa mais popular é a emissão de bilhete aéreo, provavelmente pelo fato da maioria dos deputados não morarem em Brasília e precisarem se deslocar de seus estados para o Distrito Federal. Outras despesas populares são combusíveis e lubrificantes e telefonia, na ordem. O restante dos gastos maos populares podem ser visto nos gráficos.
 
 ```{r}
 
+# primeiro, foi criado um array com três partidos escolhidos, logo depois os mesmos são filtrados no dataframe
+# em seguida, agrupa-se a variável tipoDespesa e soma-se os gastos liquidos correspondentes.
 
+partidos <- c("PT", "PMDB", "DEM")
+
+dados %>% filter(sgPartido %in% partidos) %>% 
+group_by(tipoDespesa) %>%
+summarise(despesas = sum(valorLíquido)) %>% 
+ggplot(aes(x = reorder(tipoDespesa, despesas), y = despesas)) + geom_bar(stat = "identity") + coord_flip()
 ```
 
-
+Analisando agora os gastos mais populares em termos de valores, vemos que a emissão de bilheres aéreos ainda ocupa o topo, pelos menos motivos já apresentadps acima. Divulgação da atividade parlamentar e locação ou fretamento de veículos automotores são outros também populares, na ordem. 
 
 
