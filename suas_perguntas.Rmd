@@ -1,0 +1,48 @@
+---
+title: "suas_perguntas"
+author: "José Ivan"
+date: "6 de setembro de 2018"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+dados <- read_csv(("dadosCEAP.csv"))
+```
+
+1) Quais os estados que gastaram mais dinheiro da CEAP? Quais os mais econômicos?
+
+A primeira pergunta refere-se aos estados que constam como os maiores e menores gastadores da CEAP. A resposta que penso ser a correta são os estados de São Paulo, Rio de Janeiro e Minas Gerais como os que mais gastam, pelo fato de serem os estados mais populosos do país, e, consequentemente, detentores das maiores bancadas de deputados e os estados de Roraima, Amapá e Acre como os que menos gastam, pelo fato de serem os estados menos populosos do país, e, consequentemente, detentores das menores bancadas de deputados.
+
+Porém, vamos ver se a resposta dada acima é a mesma dada pela análise dos dados que temos.
+
+
+```{r}
+
+dados %>% 
+  filter(valorLíquido > 0) %>% 
+  group_by(sgUF) %>% summarise(gastos = sum(valorLíquido)) %>% na.omit() %>% 
+  ggplot(aes(x = reorder(sgUF, -gastos), y = gastos)) + geom_bar(stat = "identity")
+  
+```
+
+Como já imaginávamos, os estados que gastaram mais dinheiro da CEAP são os três de maior bancada na Câmara são eles, São Paulo, no topo, Minas Gerais e o Rio de Janeiro. Porém, para os estados que menos gastaram dinheiro, temos uma certa surpresa, pois imaginava-se, na resposta dada no início do relatório, que os três que menos gastaram seriam os de menor bancada. Entretanto, há algumas variáveis a serem analisadas. Os três estados que menos gastaram foram: Distrito Federal, Mato Grosso e Amazonas. Em análises anteriores, vimos que a despesa mais popular entre os deputados era a emissão de bilhete aéreo, isso pelo fato da maioria dos deputados não residirem em Brasília. Sendo assim, os deputados do Distrito Federal não teriam esse tipo de despesa, pois já moram em Brasília, fato esse que coloca DF como os estado que menos gastou na CEAP. Os estados de Mato Grosso e Amazonas, por razoavelmente estarem próximos a Brasília, não necessitarem de viagens mais longas e caras, e por não terem uma bancada muito grande, entram na lista. Notemos que os 13 estados que menos gastaram, estão praticamente no mesmo nível de gasto, segundo podemos ver no gráfico.
+
+2) Quais os partidos cujos parlamentares gastam mais com passagens aéreas?
+
+A resposta que penso ser a correta para essa pergunta seriam os partidos mais populares da Câmara, isto é, aqueles que possuem a maior bancada de deputados. Sendo assim, a resposta seriam os partidos: PT, PSDB e PMDB.
+
+Entretanto vamos ver se a resposta dada condiz com a análise dos dados.
+
+```{r}
+ dados %>%
+  filter(tipoDespesa == "PASSAGENS AÉREAS") %>% group_by(sgPartido) %>% 
+  summarise(gastosPassagem = sum(valorLíquido)) %>% na.omit() %>% 
+  ggplot(aes(x = reorder(sgPartido, -gastosPassagem), y = gastosPassagem)) + geom_bar(stat = "identity") + coord_flip()
+```
+
+Como podemos ver no gráfico, os partidos que mais gastaram com passagem aéreas foram o PSDB e PMDB, dois dos partidos com maior bancada de deputados na Câmara. Como surpresa, temos o PSB, figurando entre os três primeiros. Isso deve-se, provavelmente, ao fato do PSB ter dos seus 26 deputados 14 sendo do norte-nordeste e 5 do sul, totalizando 19 deputados (73% da bancada do partido) em regiões razoavelmente distantes de Brasília, necessitando de vôos mais longos e caros.  
+

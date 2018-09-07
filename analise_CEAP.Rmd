@@ -35,7 +35,6 @@ Para encontramos os deputados que menos e mais gastaram recursos da CEAP, filtra
 Utilizamos a função top_n para obtermos os 15 deputados que mais gastaram. Podemos ver, pelo gráfico, que os deputados Edio Lopes, Rocha e Abel Mesquita Jr foram os que mais gastaram, respectivamente. O restante dos 15, podem ser visto no gráfico.
 
 ```{r}
-
 #1 b)
 
 # filtra-se os valores liquidos maiores que zero, em seguida os deputados sao agrupados por nome e seus gastos sao somados. Seleciona-se os 15 que menos gastaram.
